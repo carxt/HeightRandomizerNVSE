@@ -9,5 +9,8 @@ Below you can see them, the inverseCDF describing height variation in USA and ou
 
 ![Graph for heights](https://staticdelivery.nexusmods.com/mods/130/images/70159/70159-1603791233-1351463435.png)
 
+Option 1 is the most accurate, simulating faithfully height distribution, however, it doesn't translate into in game very well.
+Option 2 is a middle ground between option 1 and 3, where heights are varied but not excessively so.
+Option 3 is semilinear, made for high variance, which is most noticeable in games.
 
 While the code is geared towards Fallout New Vegas, you can adapt it to any game.
