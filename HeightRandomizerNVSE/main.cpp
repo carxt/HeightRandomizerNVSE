@@ -112,7 +112,7 @@ bool NVSEPlugin_Load(const NVSEInterface* nvse)
 
 	//etc
 	g_uFemalePercentage = ((float) GetPrivateProfileInt("Main", "uFemalePercentage", 92, iniDir)) / 100;
-	g_iRandomizerSeed = GetPrivateProfileIntA("Main", "iRandomizerSeed", 0, iniDir);
+	g_iRandomizerSeed = GetPrivateProfileIntA("Main", "iRandomizerSeed", 101, iniDir);
 	if (g_iRandomizerSeed <= 0) {
 		g_iRandomizerSeed = 101;
 	}
