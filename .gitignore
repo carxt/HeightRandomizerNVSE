@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/HeightRandomizerNVSE/.vs
+/HeightRandomizerNVSE/Release
+/HeightRandomizerNVSE/HeightRandomizer.vcxproj.filters
+/HeightRandomizerNVSE/HeightRandomizer.vcxproj.user

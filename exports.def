@@ -1,4 +1,0 @@
-LIBRARY	"HeightRandomizerNVSE"
-EXPORTS
-NVSEPlugin_Query
-NVSEPlugin_Load
