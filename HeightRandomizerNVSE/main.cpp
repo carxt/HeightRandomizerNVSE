@@ -4,7 +4,7 @@ bool NVSEPlugin_Query(const NVSEInterface* nvse, PluginInfo* info)
 {
 	info->infoVersion = PluginInfo::kInfoVersion;
 	info->name = "HeightRandomizer";
-	info->version = 1;
+	info->version = 2;
 
 	if (nvse->isEditor)
 	{
