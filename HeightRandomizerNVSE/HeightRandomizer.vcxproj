@@ -193,16 +193,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\nvse\nvse\SafeWrite.cpp" />
-    <ClCompile Include="dllmain.c">
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug ng|Win32'">
-      </ForcedIncludeFiles>
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </ForcedIncludeFiles>
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release ng|Win32'">
-      </ForcedIncludeFiles>
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </ForcedIncludeFiles>
-    </ClCompile>
     <ClCompile Include="internal\md5\md5.cpp" />
     <ClCompile Include="internal\sha1\sha1.cpp" />
     <ClCompile Include="internal\utility.cpp" />

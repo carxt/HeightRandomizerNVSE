@@ -40,6 +40,9 @@ enum RandomizerMode {
 
 };
 
+
+
+
 float __fastcall HeightRandomizerHook(TESObjectREFR* form)
 {
 	float returnscale = form->scale;
@@ -144,3 +147,11 @@ bool NVSEPlugin_Load(const NVSEInterface* nvse)
 
 
 
+BOOL WINAPI DllMain(
+	HANDLE  hDllHandle,
+	DWORD   dwReason,
+	LPVOID  lpreserved
+)
+{
+	return TRUE;
+}
