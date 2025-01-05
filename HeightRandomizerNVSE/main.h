@@ -4,12 +4,23 @@
 #include "nvse/PluginAPI.h"
 #include "nvse/GameObjects.h"
 #include "nvse/SafeWrite.h"
-
+#include <mutex>
 float __fastcall HeightRandomizerHook(TESObjectREFR* form);
 constexpr DWORD playerRefID = 0x14, playerBaseId = 0x7;
 
 namespace HeightRandomizer
 {
+
+	bool IsInMainThread()
+	{
+		void* OSGlobalsPtr = *(void**)0x11DEA0C;
+		if (OSGlobalsPtr)
+		{
+			return GetCurrentThreadId() == ThisStdCall(0x044EDB0, OSGlobalsPtr);
+		}
+		return true;
+	}
+
 	unsigned int FNV1aHasher(unsigned int key)
 	{
 		const unsigned int fnv_prime = 16777619;
@@ -74,11 +85,103 @@ namespace HeightRandomizer
 		scaleIn *= scaleIn * scaleIn * scaleIn * scaleIn; //pow 5
 
 		scaleIn = 1 / sqrt(sqrt(sqrt(scaleIn))); //sqrt 8;
-		return scaleIn;
+		scaleIn = fmin(scaleIn, 1);
+		return 2;
 	}
 
 	char NiHeadBlockNameScaler[MAX_PATH] = {};
 	char NiHeadBlockNameNewId[MAX_PATH] = {};
+	void* (__cdecl* NiAlloc)(unsigned int) = (decltype(NiAlloc))0xAA13E0;
+	NiNode* (__thiscall* GetSubNiNode)(Actor*, NiNode*, char*) = (decltype(GetSubNiNode))0x0490310;
+	NiNode* (__thiscall* NiSetLocalNodeScale) (NiNode*, float) = (decltype(NiSetLocalNodeScale))0x0440490;
+
+
+
+
+	std::vector<Actor*> v_currentPol;
+	std::mutex cloneMut;
+	class spinMutex
+	{
+		int spinCount;
+		std::mutex& m_tx;
+	public:
+		spinMutex() = delete;
+		spinMutex(std::mutex& mut, int spin) : m_tx(mut)
+		{
+			spinCount = 0;
+			int spinAmountLow = spin / 5;
+			while (spinCount < spin)
+			{
+				if (spinCount > spinAmountLow)
+				{
+					Sleep(0);
+				}
+				_mm_pause();
+				if (m_tx.try_lock())
+				{
+					return;
+				}
+				spinCount++;
+			}
+			m_tx.lock();
+		}
+		virtual ~spinMutex()
+		{
+			m_tx.unlock();
+		}
+	};
+
+	struct NiAVUpdateInfo
+	{
+		float		timePassed;
+		bool		updateController;
+		bool		byte05;
+		bool		byte06;
+		bool		byte07;
+		bool		byte08;
+		UInt8		pad09[3];
+
+		NiAVUpdateInfo() { ZeroMemory(this, sizeof(NiAVUpdateInfo)); }
+	};
+	static const NiAVUpdateInfo updateInfo;
+	bool AppendNode(Actor* act, NiNode* origNode)
+	{
+		NiNode* targetNode = origNode;
+		if (act->refID == playerRefID || (!targetNode))
+		{
+			targetNode = act->GetNiNode();
+		} 
+		NiNode* headNode = GetSubNiNode(act, targetNode, NiHeadBlockNameScaler);
+		if (!headNode)
+		{
+			return false;
+		}
+		unsigned int nodeChildren = ThisStdCall(0x43B480, headNode);
+		NiNode* proxyNode = GetSubNiNode(act, targetNode, NiHeadBlockNameNewId);
+		if (!proxyNode)
+		{
+			proxyNode = (NiNode*)NiAlloc(0xAC);
+			proxyNode = (NiNode*)ThisStdCall(0xA5ECB0, proxyNode, 0);
+			char* fixedStringBuf;
+			char** fixedString = &fixedStringBuf;
+			ThisStdCall(0x0438170, fixedString, NiHeadBlockNameNewId);
+			ThisStdCall(0x0A5B950, proxyNode, fixedString);
+			ThisStdCall(0x04381B0, (void*)fixedString);
+			for (int nodeC = 0; nodeC < nodeChildren; nodeC++)
+			{
+				NiNode* headNodeChildN = (NiNode*)ThisStdCall(0x043B4A0, headNode, nodeC);
+				ThisStdCall(0xA5ED10, proxyNode, headNodeChildN, 1);
+			}
+			ThisStdCall(0x572160, headNode);
+			ThisStdCall(0xA5ED10, headNode, proxyNode, 1);
+		}
+		NiSetLocalNodeScale(proxyNode, GetScaledHeadSize(act));
+		ThisStdCall(0x0A5DD70, proxyNode, &updateInfo, 0);
+		return true;
+	}
+
+
+
 
 	template <uintptr_t a_vHook>
 	class hk_ScaleInitHook
@@ -87,40 +190,25 @@ namespace HeightRandomizer
 		inline static uintptr_t a_addrOrig = a_vHook;
 		static NiNode* __fastcall GenerateNode(Actor* act, void* edx, unsigned int bDoBackgroundClone)
 		{
-			void* (__cdecl * NiAlloc)(unsigned int) = (decltype(NiAlloc))0xAA13E0;
-			NiNode* (__thiscall * GetSubNiNode)(Actor*, NiNode*, char*) = (decltype(GetSubNiNode)) 0x0490310;
-			NiNode* (__thiscall * NiSetLocalNodeScale) (NiNode*, float) = (decltype(NiSetLocalNodeScale)) 0x0440490;
-
-
 			NiNode* retNode = (NiNode*) ThisStdCall(a_addrOrig, act, bDoBackgroundClone);
-
-			NiNode* targetNode = retNode;
-			if (act->refID == playerRefID || act->baseForm->refID == playerBaseId)
+			if (act->baseForm->typeID == kFormType_NPC)
 			{
-				targetNode = act->GetNiNode();
-			}
-			NiNode* headNode = GetSubNiNode(act, targetNode, NiHeadBlockNameScaler);
-			unsigned int nodeChildren = ThisStdCall(0x043B480, targetNode);
-			NiNode* proxyNode = GetSubNiNode(act, targetNode, NiHeadBlockNameNewId);
-			if (!proxyNode)
-			{
-				proxyNode = (NiNode*)NiAlloc(0xAC);
-				proxyNode = (NiNode*)ThisStdCall(0xA5ECB0, proxyNode, 0);
-				char* fixedStringBuf;
-				char** fixedString = &fixedStringBuf;
-				ThisStdCall(0x0438170, fixedString, NiHeadBlockNameNewId);
-				ThisStdCall(0x0A5B950, proxyNode, fixedString);
-				ThisStdCall(0x04381B0, (void*)fixedString);
-				for (int nodeC = 0; nodeC < nodeChildren; nodeC++)
+				if (IsInMainThread())
 				{
-					NiNode* headNodeChildN = (NiNode*) ThisStdCall(0x043B4A0, headNode, nodeC);
-					ThisStdCall(0xA5ED10, proxyNode, headNodeChildN, 1);
+					AppendNode(act, retNode);
 				}
-				ThisStdCall(0x572160, headNode);
-				ThisStdCall(0xA5ED10, headNode, proxyNode, 1);
+				else
+				{
+					[](Actor* act)
+					{
+						spinMutex(cloneMut, 2500);
+						v_currentPol.push_back(act);
+					}(act);
+
+				}
 			}
-			NiSetLocalNodeScale(proxyNode, GetScaledHeadSize(act));
 			return retNode;
+
 		}
 	public:
 		hk_ScaleInitHook()

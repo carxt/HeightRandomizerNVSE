@@ -39,6 +39,30 @@ enum RandomizerMode {
 
 };
 
+void MessageHandler(NVSEMessagingInterface::Message* msg) {
+	static std::vector<Actor*> cloneVecInt;
+	switch (msg->type) {
+	case NVSEMessagingInterface::kMessage_MainGameLoop:
+	{
+		[](std::vector<Actor*>& cloner) 
+		{
+			HeightRandomizer::spinMutex(HeightRandomizer::cloneMut, 2500);
+			cloneVecInt.assign(HeightRandomizer::v_currentPol.begin(), HeightRandomizer::v_currentPol.end());
+			HeightRandomizer::v_currentPol.clear();
+		}
+		(cloneVecInt);
+		for (auto act : cloneVecInt)
+		{
+			HeightRandomizer::AppendNode(act, NULL);
+		}
+		cloneVecInt.clear();
+		break;
+	}
+	default:
+		break;
+	}
+}
+
 
 
 
@@ -89,6 +113,7 @@ float __fastcall HeightRandomizerHook(TESObjectREFR* form)
 bool NVSEPlugin_Load(const NVSEInterface* nvse)
 {
 	char iniDir[MAX_PATH];
+	((NVSEMessagingInterface*)nvse->QueryInterface(kInterface_Messaging))->RegisterListener(nvse->GetPluginHandle(), "NVSE", MessageHandler);
 
 	GetModuleFileNameA(GetModuleHandle(NULL), iniDir, MAX_PATH);
 	strcpy((char*)(strrchr(iniDir, '\\') + 1), "Data\\NVSE\\Plugins\\HeightRandomizer.ini");
