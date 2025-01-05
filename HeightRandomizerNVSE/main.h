@@ -82,9 +82,7 @@ namespace HeightRandomizer
 		{
 			scaleIn = fmin(fmax(HeightRandomizerHook(act), 0.75), 1.25);
 		}
-		scaleIn *= scaleIn * scaleIn * scaleIn * scaleIn; //pow 5
-
-		scaleIn = 1 / sqrt(sqrt(sqrt(scaleIn))); //sqrt 8;
+		scaleIn = (sqrt(scaleIn) - 0.0375) / scaleIn;
 		return scaleIn;
 	}
 
