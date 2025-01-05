@@ -20,7 +20,6 @@ bool NVSEPlugin_Query(const NVSEInterface* nvse, PluginInfo* info)
 	return true;
 }
 
-constexpr DWORD playerRefID = 0x14, playerBaseId = 0x7;
 
 float (*CurveModifier)(unsigned int, unsigned int);
 unsigned int (*NumberManipulatorFunction)(unsigned int);
@@ -137,6 +136,21 @@ bool NVSEPlugin_Load(const NVSEInterface* nvse)
 
 	if (g_uFemalePercentage <= 0.1) { g_uFemalePercentage = 0.1; }
 	WriteRelJump(0x0567400, (UInt32)HeightRandomizerHook);
+	GetPrivateProfileString("Main", "NiHeadBlockNameScale", "Bip01 Neck1", HeightRandomizer::NiHeadBlockNameScaler, _countof(HeightRandomizer::NiHeadBlockNameScaler) - 1, iniDir);
+	GetPrivateProfileString("Main", "NiHeadBlockNameHookId", "krtTmlOb2RlHeadScale", HeightRandomizer::NiHeadBlockNameNewId, _countof(HeightRandomizer::NiHeadBlockNameNewId) - 1, iniDir);
+	
+	if (GetPrivateProfileIntA("Main", "bScaleNPCHeads", 0, iniDir))
+	{
+		HeightRandomizer::hk_ScaleInitHook<0x108441C>();
+		HeightRandomizer::hk_ScaleInitHook<0x1086C34>();
+		HeightRandomizer::hk_ScaleInitHook<0x1087274>();
+	}
+	if (GetPrivateProfileIntA("Main", "bScalePlayerHead", 0, iniDir))
+	{
+		HeightRandomizer::hk_ScaleInitHook<0x108AC04>();
+	}
+
+	
 
 	return true;
 }
