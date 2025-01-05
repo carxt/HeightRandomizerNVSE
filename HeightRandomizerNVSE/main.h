@@ -85,8 +85,7 @@ namespace HeightRandomizer
 		scaleIn *= scaleIn * scaleIn * scaleIn * scaleIn; //pow 5
 
 		scaleIn = 1 / sqrt(sqrt(sqrt(scaleIn))); //sqrt 8;
-		scaleIn = fmin(scaleIn, 1);
-		return 2;
+		return scaleIn;
 	}
 
 	char NiHeadBlockNameScaler[MAX_PATH] = {};
