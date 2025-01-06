@@ -47,7 +47,7 @@ void MessageHandler(NVSEMessagingInterface::Message* msg) {
 		[](std::vector<Actor*>& cloner) 
 		{
 			HeightRandomizer::spinMutex(HeightRandomizer::cloneMut, 2500);
-			cloneVecInt.assign(HeightRandomizer::v_currentPol.begin(), HeightRandomizer::v_currentPol.end());
+			cloner.assign(HeightRandomizer::v_currentPol.begin(), HeightRandomizer::v_currentPol.end());
 			HeightRandomizer::v_currentPol.clear();
 		}
 		(cloneVecInt);
@@ -166,13 +166,15 @@ bool NVSEPlugin_Load(const NVSEInterface* nvse)
 	
 	if (GetPrivateProfileIntA("Main", "bScaleNPCHeads", 0, iniDir))
 	{
-		HeightRandomizer::hk_ScaleInitHook<0x108441C>();
-		HeightRandomizer::hk_ScaleInitHook<0x1086C34>();
-		HeightRandomizer::hk_ScaleInitHook<0x1087274>();
+		HeightRandomizer::hk_ScaleInitHook<0x087E071>();
+		HeightRandomizer::hk_ScaleInitHook<0x09335CE>();
+		HeightRandomizer::hk_GetScaleHook<0x0570500>();
+		HeightRandomizer::hk_GetScaleHook<0x0440378>();
+		
 	}
 	if (GetPrivateProfileIntA("Main", "bScalePlayerHead", 0, iniDir))
 	{
-		HeightRandomizer::hk_ScaleInitHook<0x108AC04>();
+		HeightRandomizer::bScalePlayerHead = true;
 	}
 
 	

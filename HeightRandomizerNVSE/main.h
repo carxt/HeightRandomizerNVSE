@@ -5,12 +5,13 @@
 #include "nvse/GameObjects.h"
 #include "nvse/SafeWrite.h"
 #include <mutex>
+#include <set>
 float __fastcall HeightRandomizerHook(TESObjectREFR* form);
 constexpr DWORD playerRefID = 0x14, playerBaseId = 0x7;
 
 namespace HeightRandomizer
 {
-
+	bool bScalePlayerHead = false;
 	bool IsInMainThread()
 	{
 		void* OSGlobalsPtr = *(void**)0x11DEA0C;
@@ -78,11 +79,8 @@ namespace HeightRandomizer
 	float GetScaledHeadSize(Actor* act)
 	{
 		float scaleIn = 1.0f;
-		if (act->refID != playerRefID && act->baseForm->refID != playerBaseId) //leave the player alone
-		{
-			scaleIn = fmin(fmax(HeightRandomizerHook(act), 0.75), 1.25);
-		}
-		scaleIn = (sqrt(scaleIn) - 0.02625) / scaleIn;
+		scaleIn = fmin(fmax(HeightRandomizerHook(act), 0.75), 1.25);
+		scaleIn = (sqrt(scaleIn) - 0.2125) / (scaleIn - 0.2125);
 		return scaleIn;
 	}
 
@@ -95,7 +93,7 @@ namespace HeightRandomizer
 
 
 
-	std::vector<Actor*> v_currentPol;
+	std::set<Actor*> v_currentPol;
 	std::mutex cloneMut;
 	class spinMutex
 	{
@@ -148,6 +146,10 @@ namespace HeightRandomizer
 		{
 			targetNode = act->GetNiNode();
 		} 
+		if (!targetNode)
+		{
+			return false;
+		}
 		NiNode* headNode = GetSubNiNode(act, targetNode, NiHeadBlockNameScaler);
 		if (!headNode)
 		{
@@ -173,46 +175,77 @@ namespace HeightRandomizer
 			ThisStdCall(0xA5ED10, headNode, proxyNode, 1);
 		}
 		NiSetLocalNodeScale(proxyNode, GetScaledHeadSize(act));
-		ThisStdCall(0x0A5DD70, proxyNode, &updateInfo, 0);
+		//ThisStdCall(0x0A5DD70, proxyNode, &updateInfo, 0); //dont use updatepass, instead use updatebound
+		ThisStdCall(0x0A5E0B0, proxyNode, &updateInfo);
+
 		return true;
 	}
 
+	inline uintptr_t GetRelJumpAddr(uintptr_t address)
+	{
+		return *(uintptr_t*)(address + 1) + address + 5;
+	}
 
+	void AddModelToQueue(Actor* act)
+	{
+		if (act->IsActor())
+		{
+			if ((act->refID != playerRefID && act->baseForm->refID != playerBaseId) || bScalePlayerHead) //leave the player alone unless enabled
+			{
+				if (act->baseForm->typeID == kFormType_NPC)
+				{
+					[](Actor* act)
+					{
+						spinMutex(cloneMut, 2500);
+						v_currentPol.insert(act);
+					}(act);
+				}
+			}
 
+		}
+	}
 
 	template <uintptr_t a_vHook>
 	class hk_ScaleInitHook
 	{
 	private:
 		inline static uintptr_t a_addrOrig = a_vHook;
-		static NiNode* __fastcall GenerateNode(Actor* act, void* edx, unsigned int bDoBackgroundClone)
+		static void* __fastcall UpdModelEpilog(Actor* act, void* edx, unsigned int bDoBackgroundClone)
 		{
-			NiNode* retNode = (NiNode*) ThisStdCall(a_addrOrig, act, bDoBackgroundClone);
-			if (act->baseForm->typeID == kFormType_NPC)
-			{
-				if (IsInMainThread())
-				{
-					AppendNode(act, retNode);
-				}
-				else
-				{
-					[](Actor* act)
-					{
-						spinMutex(cloneMut, 2500);
-						v_currentPol.push_back(act);
-					}(act);
-
-				}
-			}
-			return retNode;
+			void* retVal = (void*) ThisStdCall(a_addrOrig, act, bDoBackgroundClone);
+			AddModelToQueue(act);
+			return retVal;
 
 		}
 	public:
 		hk_ScaleInitHook()
 		{
 			uintptr_t hk_hookPoint = a_addrOrig;
-			a_addrOrig = (*(uintptr_t*)a_addrOrig);
-			SafeWrite32(hk_hookPoint, (uintptr_t)GenerateNode);
+			a_addrOrig = GetRelJumpAddr(a_addrOrig);
+			WriteRelCall(hk_hookPoint, (uintptr_t)UpdModelEpilog);
+		}
+	};
+
+
+	template <uintptr_t a_vHook>
+	class hk_GetScaleHook
+	{
+	private:
+		inline static uintptr_t a_addrOrig = a_vHook;
+		static float __fastcall GetActor3D(Actor* act)
+		{
+			float(__thiscall * hookCall)(Actor*) = (decltype(hookCall))a_addrOrig;
+			float retVal = hookCall(act);
+			AddModelToQueue(act);
+			return retVal;
+
+		}
+	public:
+		hk_GetScaleHook()
+		{
+			uintptr_t hk_hookPoint = a_addrOrig;
+			a_addrOrig = GetRelJumpAddr(a_addrOrig);
+			WriteRelCall(hk_hookPoint, (uintptr_t)GetActor3D);
 		}
 	};
 
