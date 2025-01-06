@@ -91,6 +91,7 @@ namespace HeightRandomizer
 			scaleIn *= scaleIn;
 			scaleIn = (0.125 / scaleIn) + 0.875;
 		}
+		return 2;
 		return scaleIn;
 	}
 
@@ -152,6 +153,11 @@ namespace HeightRandomizer
 	bool AppendNode(Actor* act, NiNode* origNode)
 	{
 		NiNode* targetNode = origNode;
+		if (!act)
+		{
+			//cursed, what
+			return false;
+		}
 		if (act->refID == playerRefID || (!targetNode))
 		{
 			targetNode = act->GetNiNode();
@@ -237,7 +243,7 @@ namespace HeightRandomizer
 	};
 
 
-	template <uintptr_t a_vHook>
+	template <uintptr_t a_vHook, bool playerOnly = false>
 	class hk_GetScaleHook
 	{
 	private:
@@ -246,6 +252,7 @@ namespace HeightRandomizer
 		{
 			float(__thiscall * hookCall)(Actor*) = (decltype(hookCall))a_addrOrig;
 			float retVal = hookCall(act);
+			if (!playerOnly || (act == *(Actor**)0x11DEA3C));
 			AddModelToQueue(act);
 			return retVal;
 
@@ -258,5 +265,25 @@ namespace HeightRandomizer
 			WriteRelCall(hk_hookPoint, (uintptr_t)GetActor3D);
 		}
 	};
+	template <uintptr_t a_vHook>
+	class hk_GetBaseFormHook
+	{
+	private:
+		inline static uintptr_t a_addrOrig = a_vHook;
+		static TESForm* __fastcall GetActor3D(Actor* act)
+		{
+			TESForm*(__thiscall * hookCall)(Actor*) = (decltype(hookCall))a_addrOrig;
+			TESForm* retVal = hookCall(act);
+			AddModelToQueue(act);
+			return retVal;
 
+		}
+	public:
+		hk_GetBaseFormHook()
+		{
+			uintptr_t hk_hookPoint = a_addrOrig;
+			a_addrOrig = GetRelJumpAddr(a_addrOrig);
+			WriteRelCall(hk_hookPoint, (uintptr_t)GetActor3D);
+		}
+	};
 }

@@ -166,10 +166,16 @@ bool NVSEPlugin_Load(const NVSEInterface* nvse)
 	
 	if (GetPrivateProfileIntA("Main", "bScaleNPCHeads", 0, iniDir))
 	{
-		HeightRandomizer::hk_ScaleInitHook<0x087E071>();
+		//HeightRandomizer::hk_ScaleInitHook<0x087E071>();
+		//HeightRandomizer::hk_GetScaleHook<0x0440378>();
+		//HeightRandomizer::hk_GetBaseFormHook<0x04401D4>();
 		HeightRandomizer::hk_ScaleInitHook<0x09335CE>();
 		HeightRandomizer::hk_GetScaleHook<0x0570500>();
-		HeightRandomizer::hk_GetScaleHook<0x0440378>();
+		HeightRandomizer::hk_ScaleInitHook<0x08F6E89>();
+
+
+
+		
 
 		
 		
@@ -177,7 +183,8 @@ bool NVSEPlugin_Load(const NVSEInterface* nvse)
 	if (GetPrivateProfileIntA("Main", "bScalePlayerHead", 0, iniDir))
 	{
 		HeightRandomizer::bScalePlayerHead = true;
-		HeightRandomizer::hk_ScaleInitHook<0x056756F>();
+		HeightRandomizer::hk_GetScaleHook<0x056756F, true>();
+
 
 	}
 
