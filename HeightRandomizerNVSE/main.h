@@ -79,8 +79,18 @@ namespace HeightRandomizer
 	float GetScaledHeadSize(Actor* act)
 	{
 		float scaleIn = 1.0f;
-		scaleIn = fmin(fmax(HeightRandomizerHook(act), 0.75), 1.25);
-		scaleIn = (sqrt(scaleIn) - 0.2125) / (scaleIn - 0.2125);
+		scaleIn = fmin(fmax(HeightRandomizerHook(act), 0.85), 1.15);
+		//scaleIn = (sqrt(scaleIn) - 0.2125) / ((scaleIn) - 0.2125); //just go with sqrt
+		if (scaleIn < 1)
+		{
+			scaleIn = sqrt(2.25 - (1.25 * scaleIn));
+		}
+		else 
+		{
+			scaleIn *= scaleIn;
+			scaleIn *= scaleIn;
+			scaleIn = (0.125 / scaleIn) + 0.875;
+		}
 		return scaleIn;
 	}
 
