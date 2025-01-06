@@ -170,11 +170,15 @@ bool NVSEPlugin_Load(const NVSEInterface* nvse)
 		HeightRandomizer::hk_ScaleInitHook<0x09335CE>();
 		HeightRandomizer::hk_GetScaleHook<0x0570500>();
 		HeightRandomizer::hk_GetScaleHook<0x0440378>();
+
+		
 		
 	}
 	if (GetPrivateProfileIntA("Main", "bScalePlayerHead", 0, iniDir))
 	{
 		HeightRandomizer::bScalePlayerHead = true;
+		HeightRandomizer::hk_ScaleInitHook<0x056756F>();
+
 	}
 
 	
