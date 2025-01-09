@@ -97,7 +97,7 @@ namespace HeightRandomizer
 	char NiHeadBlockNameScaler[MAX_PATH] = {};
 	char NiHeadBlockNameNewId[MAX_PATH] = {};
 	void* (__cdecl* NiAlloc)(unsigned int) = (decltype(NiAlloc))0xAA13E0;
-	NiNode* (__stdcall* GetSubNiNode)(Actor*, NiNode*, char*) = (decltype(GetSubNiNode))0x0490310;
+	NiNode* (__thiscall* GetSubNiNode)(Actor*, NiNode*, char*) = (decltype(GetSubNiNode))0x0490310;
 	NiNode* (__thiscall* NiSetLocalNodeScale) (NiNode*, float) = (decltype(NiSetLocalNodeScale))0x0440490;
 
 
@@ -184,14 +184,15 @@ namespace HeightRandomizer
 			for (int nodeC = 0; nodeC < nodeChildren; nodeC++)
 			{
 				NiNode* headNodeChildN = (NiNode*)ThisStdCall(0x043B4A0, headNode, nodeC);
-				ThisStdCall(0xA5ED10, proxyNode, headNodeChildN, 1); //should update this one to use virtual dispatch
+				ThisStdCall(*(uintptr_t*) ((*(uintptr_t*)proxyNode) + 0xDC), proxyNode, headNodeChildN, 1); //should update this one to use virtual dispatch
 			}
 			ThisStdCall(0x572160, headNode);
-			ThisStdCall(0xA5ED10, headNode, proxyNode, 1); //should update this one to use virtual dispatch
+
+			ThisStdCall(*(uintptr_t*)((*(uintptr_t*)headNode) + 0xDC), headNode, proxyNode, 1); //should update this one to use virtual dispatch
 		}
 		NiSetLocalNodeScale(proxyNode, GetScaledHeadSize(act));
 		//ThisStdCall(0x0A5DD70, proxyNode, &updateInfo, 0); //dont use updatepass, instead use updatebound
-		ThisStdCall(0x0A5E0B0, proxyNode, &updateInfo); //should update this one to use virtual dispatch
+		ThisStdCall(*(uintptr_t*)((*(uintptr_t*)proxyNode) + 0xC0), proxyNode, &updateInfo); //should update this one to use virtual dispatch
 
 		return true;
 	}
