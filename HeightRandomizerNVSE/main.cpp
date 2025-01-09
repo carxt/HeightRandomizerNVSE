@@ -170,8 +170,8 @@ bool NVSEPlugin_Load(const NVSEInterface* nvse)
 		//HeightRandomizer::hk_GetScaleHook<0x0440378>();
 		//HeightRandomizer::hk_GetBaseFormHook<0x04401D4>();
 		HeightRandomizer::hk_ScaleInitHook<0x09335CE>();
-		HeightRandomizer::hk_GetScaleHook<0x0570500>();
 		HeightRandomizer::hk_ScaleInitHook<0x08F6E89>();
+		HeightRandomizer::hk_GetScaleHook<0x0570500>();
 
 
 
