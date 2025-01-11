@@ -256,8 +256,10 @@ namespace HeightRandomizer
 		{
 			float(__thiscall * hookCall)(Actor*) = (decltype(hookCall))a_addrOrig;
 			float retVal = hookCall(act);
-			if (!playerOnly || (act == *(Actor**)0x11DEA3C));
-			AddModelToQueue(act);
+			if (!playerOnly || (act == *(Actor**)0x11DEA3C))
+			{
+				AddModelToQueue(act);
+			}
 			return retVal;
 
 		}
