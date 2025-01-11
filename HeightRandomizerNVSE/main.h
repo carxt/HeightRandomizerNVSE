@@ -166,7 +166,6 @@ namespace HeightRandomizer
 		{
 			return false;
 		}
-		ThisStdCall(0x040F6E0, targetNode); //node inc ref count
 		NiNode* headNode = GetSubNiNode(act, targetNode, NiHeadBlockNameScaler);
 		if (headNode)
 		{
@@ -199,7 +198,6 @@ namespace HeightRandomizer
 		{
 			return false;
 		}
-		ThisStdCall(0x0401970, targetNode); //node dec ref count
 		return true;
 	}
 
