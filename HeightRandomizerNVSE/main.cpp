@@ -38,22 +38,31 @@ enum RandomizerMode {
 
 
 };
-
+const _LookupFormByID LookupFormByID = (_LookupFormByID)0x004839C0;
 void MessageHandler(NVSEMessagingInterface::Message* msg) {
-	static std::vector<Actor*> cloneVecInt;
+	static std::vector<UInt32> cloneVecInt;
 	switch (msg->type) {
 	case NVSEMessagingInterface::kMessage_MainGameLoop:
 	{
-		[](std::vector<Actor*>& cloner) 
+		[](std::vector<UInt32>& cloner) 
 		{
 			HeightRandomizer::spinMutex(HeightRandomizer::cloneMut, 2500);
 			cloner.assign(HeightRandomizer::v_currentPol.begin(), HeightRandomizer::v_currentPol.end());
 			HeightRandomizer::v_currentPol.clear();
 		}
 		(cloneVecInt);
-		for (auto act : cloneVecInt)
+		for (auto rId : cloneVecInt)
 		{
-			HeightRandomizer::AppendNode(act, NULL);
+			TESForm* currForm = LookupFormByID(rId);
+			Actor* act = NULL;
+			if (currForm && currForm->IsActor())
+			{
+				act = (Actor*)currForm;
+				if (act->baseForm->typeID == kFormType_NPC)
+				{
+					HeightRandomizer::AppendNode(act, NULL);
+				}
+			}
 		}
 		cloneVecInt.clear();
 		break;

@@ -3,6 +3,7 @@
 #include "internal/utility.h"
 #include "nvse/PluginAPI.h"
 #include "nvse/GameObjects.h"
+#include "nvse/GameTypes.h"
 #include "nvse/SafeWrite.h"
 #include <mutex>
 #include <set>
@@ -103,7 +104,7 @@ namespace HeightRandomizer
 
 
 
-	std::set<Actor*> v_currentPol;
+	std::set<UInt32> v_currentPol;
 	std::mutex cloneMut;
 	class spinMutex
 	{
@@ -165,35 +166,40 @@ namespace HeightRandomizer
 		{
 			return false;
 		}
+		ThisStdCall(0x040F6E0, targetNode); //node inc ref count
 		NiNode* headNode = GetSubNiNode(act, targetNode, NiHeadBlockNameScaler);
-		if (!headNode)
+		if (headNode)
+		{
+			unsigned int nodeChildren = ThisStdCall(0x43B480, headNode);
+			NiNode* proxyNode = GetSubNiNode(act, targetNode, NiHeadBlockNameNewId);
+			if (!proxyNode)
+			{
+				proxyNode = (NiNode*)NiAlloc(0xAC);
+				proxyNode = (NiNode*)ThisStdCall(0xA5ECB0, proxyNode, 0);
+				char* fixedStringBuf;
+				char** fixedString = &fixedStringBuf;
+				ThisStdCall(0x0438170, fixedString, NiHeadBlockNameNewId); //create new bsstring
+				ThisStdCall(0x0A5B950, proxyNode, fixedString);
+				ThisStdCall(0x04381B0, (void*)fixedString);
+				for (int nodeC = 0; nodeC < nodeChildren; nodeC++)
+				{
+					NiNode* headNodeChildN = (NiNode*)ThisStdCall(0x043B4A0, headNode, nodeC);
+					ThisStdCall(*(uintptr_t*)((*(uintptr_t*)proxyNode) + 0xDC), proxyNode, headNodeChildN, 1); //should update this one to use virtual dispatch
+				}
+				ThisStdCall(0x572160, headNode);
+
+				ThisStdCall(*(uintptr_t*)((*(uintptr_t*)headNode) + 0xDC), headNode, proxyNode, 1); //should update this one to use virtual dispatch
+			}
+			NiSetLocalNodeScale(proxyNode, GetScaledHeadSize(act));
+			//ThisStdCall(0x0A5DD70, proxyNode, &updateInfo, 0); //dont use updatepass, instead use updatebound
+			ThisStdCall(*(uintptr_t*)((*(uintptr_t*)proxyNode) + 0xC0), proxyNode, &updateInfo); //should update this one to use virtual dispatch
+			ThisStdCall(0x040F6E0, targetNode);
+		}
+		else 
 		{
 			return false;
 		}
-		unsigned int nodeChildren = ThisStdCall(0x43B480, headNode);
-		NiNode* proxyNode = GetSubNiNode(act, targetNode, NiHeadBlockNameNewId);
-		if (!proxyNode)
-		{
-			proxyNode = (NiNode*)NiAlloc(0xAC);
-			proxyNode = (NiNode*)ThisStdCall(0xA5ECB0, proxyNode, 0);
-			char* fixedStringBuf;
-			char** fixedString = &fixedStringBuf;
-			ThisStdCall(0x0438170, fixedString, NiHeadBlockNameNewId); //create new bsstring
-			ThisStdCall(0x0A5B950, proxyNode, fixedString);
-			ThisStdCall(0x04381B0, (void*)fixedString);
-			for (int nodeC = 0; nodeC < nodeChildren; nodeC++)
-			{
-				NiNode* headNodeChildN = (NiNode*)ThisStdCall(0x043B4A0, headNode, nodeC);
-				ThisStdCall(*(uintptr_t*) ((*(uintptr_t*)proxyNode) + 0xDC), proxyNode, headNodeChildN, 1); //should update this one to use virtual dispatch
-			}
-			ThisStdCall(0x572160, headNode);
-
-			ThisStdCall(*(uintptr_t*)((*(uintptr_t*)headNode) + 0xDC), headNode, proxyNode, 1); //should update this one to use virtual dispatch
-		}
-		NiSetLocalNodeScale(proxyNode, GetScaledHeadSize(act));
-		//ThisStdCall(0x0A5DD70, proxyNode, &updateInfo, 0); //dont use updatepass, instead use updatebound
-		ThisStdCall(*(uintptr_t*)((*(uintptr_t*)proxyNode) + 0xC0), proxyNode, &updateInfo); //should update this one to use virtual dispatch
-
+		ThisStdCall(0x0401970, targetNode); //node dec ref count
 		return true;
 	}
 
@@ -213,7 +219,7 @@ namespace HeightRandomizer
 					[](Actor* act)
 					{
 						spinMutex(cloneMut, 2500);
-						v_currentPol.insert(act);
+						v_currentPol.insert(act->refID);
 					}(act);
 				}
 			}
