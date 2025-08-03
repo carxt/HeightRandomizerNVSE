@@ -7,6 +7,15 @@
 #include "nvse/SafeWrite.h"
 #include <mutex>
 #include <set>
+
+
+
+
+
+
+
+
+
 float __fastcall HeightRandomizerHook(TESObjectREFR* form);
 constexpr DWORD playerRefID = 0x14, playerBaseId = 0x7;
 
@@ -101,7 +110,7 @@ namespace HeightRandomizer
 	NiNode* (__thiscall* GetSubNiNode)(Actor*, NiNode*, char*) = (decltype(GetSubNiNode))0x0490310;
 	NiNode* (__thiscall* NiSetLocalNodeScale) (NiNode*, float) = (decltype(NiSetLocalNodeScale))0x0440490;
 
-
+	
 
 
 	std::set<UInt32> v_currentPol;
@@ -192,7 +201,6 @@ namespace HeightRandomizer
 			NiSetLocalNodeScale(proxyNode, GetScaledHeadSize(act));
 			//ThisStdCall(0x0A5DD70, proxyNode, &updateInfo, 0); //dont use updatepass, instead use updatebound
 			ThisStdCall(*(uintptr_t*)((*(uintptr_t*)proxyNode) + 0xC0), proxyNode, &updateInfo); //should update this one to use virtual dispatch
-			ThisStdCall(0x040F6E0, targetNode);
 		}
 		else 
 		{
